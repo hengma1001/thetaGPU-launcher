@@ -4,6 +4,10 @@ import os
 import getpass
 import subprocess
 import tempfile
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
+logger = logging.getLogger(__name__)
 
 
 IDENTITY_FILE = os.environ.setdefault(
@@ -52,6 +56,7 @@ class ComputeNode:
 class ComputeNodeManager:
     def __init__(self, hostfile=None):
         self.nodes = ComputeNode.get_node_list(hostfile=hostfile)
+        logger.info("Manager detected {len(self.nodes)} compute nodes")
 
     def request(self, num_nodes: int, gpus_per_node: int) -> Tuple[List[ComputeNode], Set[int]]:
         available_nodes = [
@@ -64,9 +69,8 @@ class ComputeNodeManager:
         }
         idle_gpu_sets = list(idle_gpu_map.values())
 
-        # Not enough nodes have `gpus_per_node` free GPUs
         if len(idle_gpu_map) < num_nodes:
-            raise InsufficientResources
+            raise InsufficientResources("Not enough nodes have `gpus_per_node` free GPUs")
 
         # Select a common tuple of GPU IDs that is available on all num_nodes
         common_gpu_ids = (
@@ -77,9 +81,9 @@ class ComputeNodeManager:
         )
         gpu_ids = next(common_gpu_ids, None)
 
-        # Not enough nodes have the *same* set of idle GPU IDs
+        
         if gpu_ids is None:
-            raise InsufficientResources
+            raise InsufficientResources("Not enough nodes have a matching set of idle GPU IDs")
 
         nodes = [
             node
@@ -92,6 +96,7 @@ class ComputeNodeManager:
                 node.idle_gpus.remove(id)
                 node.busy_gpus.add(id)
 
+        logger.debug(f"Assigned GPUs {gpu_ids} on nodes: {nodes}")
         return (nodes, gpu_ids)
 
 
@@ -168,7 +173,7 @@ class MPIRun:
         )
 
         args = ' && '.join(MPIRun.ENVIRON_SETUP + [mpi_command])
-        print("Popen:", args)
+        logger.info(f"Popen: {args}")
         self.process = subprocess.Popen(
             args=args,
             shell=True,
@@ -196,7 +201,7 @@ if __name__ == "__main__":
         node_manager = ComputeNodeManager(hostfile=fp.name)
 
     nodes, gpus = node_manager.request(num_nodes=128, gpus_per_node=1)
-    print(nodes, gpus)
+    logger.info(nodes, gpus)
     nodes, gpus = node_manager.request(num_nodes=1, gpus_per_node=1)
     print(nodes, gpus)
     nodes, gpus = node_manager.request(num_nodes=1, gpus_per_node=6)
