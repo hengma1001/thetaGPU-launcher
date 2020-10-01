@@ -1,9 +1,9 @@
 import argparse
-import tf.keras as keras
-from tf.keras.datasets import mnist
-from tf.keras.models import Sequential
-from tf.keras.layers import Dense, Dropout
-from tf.keras.optimizers import RMSprop
+import tensorflow.keras as keras
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import RMSprop
 from tensorflow.python.client import device_lib
 import socket
 import subprocess

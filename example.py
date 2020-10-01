@@ -5,10 +5,11 @@ from launcher import (
     InsufficientResources,
     MPIRun,
 )
+import time
 
 # Commands that run in a sub-shell immediately before each task:
 MPIRun.set_preamble_commands(
-    'eval "$(/home/braceal/miniconda3/bin/conda shell.bash hook)"',
+    'eval "$(/lus/theta-fs0/projects/RL-fold/msalim/miniconda3/bin/conda shell.bash hook)"',
     'conda activate /lus/theta-fs0/projects/RL-fold/venkatv/software/conda_env/a100_rapids_openmm',
 )
 
@@ -17,7 +18,7 @@ node_manager = ComputeNodeManager()
 num_nodes = len(node_manager.nodes)
 
 runs = []
-os.mkdirs("test-outputs", exist_ok=True)
+os.makedirs("test-outputs", exist_ok=True)
 
 for i in range(num_nodes):
     nodes, gpus = node_manager.request(num_nodes=1, gpus_per_node=1)
@@ -41,3 +42,4 @@ while runs:
     runs = [run for run in runs if run.poll() is None]
     time.sleep(5)
 
+print("All done!")

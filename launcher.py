@@ -28,7 +28,7 @@ class ComputeNode:
         self.busy_gpus = set()
 
     def __str__(self):
-        return f"self.id"
+        return f"{self.id}"
 
     def __repr__(self):
         return f"<ComputeNode: {self.id}>"
@@ -56,7 +56,7 @@ class ComputeNode:
 class ComputeNodeManager:
     def __init__(self, hostfile=None):
         self.nodes = ComputeNode.get_node_list(hostfile=hostfile)
-        logger.info("Manager detected {len(self.nodes)} compute nodes")
+        logger.info(f"Manager detected {len(self.nodes)} compute nodes")
 
     def request(self, num_nodes: int, gpus_per_node: int) -> Tuple[List[ComputeNode], Set[int]]:
         available_nodes = [
@@ -102,8 +102,8 @@ class ComputeNodeManager:
 
 class MPIRunTemplate:
     @staticmethod
-    def _host_str(node_ids):
-        node_str = ",".join(str(id) for id in node_ids)
+    def _host_str(nodes):
+        node_str = ",".join(str(node) for node in nodes)
         return f"--host {node_str}"
 
     @staticmethod
@@ -125,17 +125,17 @@ class MPIRunTemplate:
         if hostfile is None:
             hostfile = os.environ["COBALT_NODEFILE"]
 
-        hosts = MPICommand._host_str(node_ids)
+        hosts = MPIRunTemplate._host_str(nodes)
 
         if envs_dict is None:
             envs_dict = {}
         envs_dict["MEDULLA_IDENTITY_FILE"] = IDENTITY_FILE
         if gpu_ids:
             envs_dict["CUDA_VISIBLE_DEVICES"] = ",".join(str(id) for id in gpu_ids)
-        envs = MPICommand._env_str(envs_dict)
+        envs = MPIRunTemplate._env_str(envs_dict)
 
         return (
-            f"mpirun -hostfile {hostfile} --oversubscribe --bind-to-none "
+            f"mpirun -hostfile {hostfile} --oversubscribe --bind-to none "
             f"-n {num_ranks} -npernode {ranks_per_node} "
             f"{envs} {hosts} {command_line}"
         )
@@ -177,6 +177,7 @@ class MPIRun:
         self.process = subprocess.Popen(
             args=args,
             shell=True,
+            executable="/bin/bash",
             cwd=cwd,
             stdout=self.outfile,
             stderr=subprocess.STDOUT
@@ -201,7 +202,7 @@ if __name__ == "__main__":
         node_manager = ComputeNodeManager(hostfile=fp.name)
 
     nodes, gpus = node_manager.request(num_nodes=128, gpus_per_node=1)
-    logger.info(nodes, gpus)
+    print(nodes, gpus)
     nodes, gpus = node_manager.request(num_nodes=1, gpus_per_node=1)
     print(nodes, gpus)
     nodes, gpus = node_manager.request(num_nodes=1, gpus_per_node=6)
