@@ -144,6 +144,7 @@ class MPIRunTemplate:
 
 
 class MPIRun:
+    ENVIRON_SETUP = []
 
     @staticmethod
     def set_preamble_commands(*cmds):
