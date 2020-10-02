@@ -26,7 +26,7 @@ for i in range(num_nodes):
     output_file = NamedTemporaryFile(dir="./test-outputs", delete=False)
 
     run = MPIRun(
-        cmd_line="python mnist.py",
+        cmd_line="python hello.py",
         node_list=nodes,
         ranks_per_node=1,
         gpu_ids=gpus,
